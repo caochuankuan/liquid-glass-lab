@@ -4,6 +4,11 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
 }
 
+val signingStoreFile = providers.environmentVariable("SIGNING_STORE_FILE").orNull
+val signingStorePassword = providers.environmentVariable("SIGNING_STORE_PASSWORD").orNull
+val signingKeyAlias = providers.environmentVariable("SIGNING_KEY_ALIAS").orNull
+val signingKeyPassword = providers.environmentVariable("SIGNING_KEY_PASSWORD").orNull
+
 android {
     namespace = "com.example.liquidglassnavdemos"
     compileSdk = 37
@@ -15,9 +20,28 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        if (
+            listOf(
+                signingStoreFile,
+                signingStorePassword,
+                signingKeyAlias,
+                signingKeyPassword,
+            ).all { !it.isNullOrBlank() }
+        ) {
+            create("release") {
+                storeFile = file(requireNotNull(signingStoreFile))
+                storePassword = requireNotNull(signingStorePassword)
+                keyAlias = requireNotNull(signingKeyAlias)
+                keyPassword = requireNotNull(signingKeyPassword)
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

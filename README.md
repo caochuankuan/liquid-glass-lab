@@ -1,5 +1,7 @@
 # Liquid Glass Lab
 
+[![Build signed release](https://github.com/caochuankuan/liquid-glass-lab/actions/workflows/build-signed-release.yml/badge.svg)](https://github.com/caochuankuan/liquid-glass-lab/actions/workflows/build-signed-release.yml)
+
 一个用于比较 Android 底部液态玻璃导航实现的实验项目。项目重点区分普通高斯模糊与真正的折射、色散、Fresnel 和动态背景采样。
 
 ![Liquid Glass Lab 首页](docs/images/home.png)
@@ -118,6 +120,12 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
 也可以直接使用 Android Studio 打开项目并运行 `app` 配置。
+
+## CI Release
+
+推送到 `main`、手动触发工作流或创建 Pull Request 时，GitHub Actions 会运行单元测试并构建 Release APK。非 Pull Request 事件还会创建 GitHub Release，附带 APK 和 SHA-256 校验文件。
+
+每次 CI 都会生成一个临时签名证书。不同工作流运行产生的 APK 签名不同，因此不能互相覆盖安装；升级时需要先卸载旧的 CI 版本。正式分发时应改用安全保存的固定发布密钥。
 
 ## 主要依赖
 

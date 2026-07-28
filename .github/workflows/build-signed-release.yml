@@ -1,0 +1,84 @@
+name: Build signed release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon
+
+      - name: Generate ephemeral signing key
+        shell: bash
+        run: |
+          store_password="$(openssl rand -hex 24)"
+          key_password="$(openssl rand -hex 24)"
+          keytool -genkeypair \
+            -keystore "$RUNNER_TEMP/liquid-glass-lab-release.jks" \
+            -storepass "$store_password" \
+            -keypass "$key_password" \
+            -alias liquid-glass-lab \
+            -keyalg RSA \
+            -keysize 4096 \
+            -storetype JKS \
+            -validity 1 \
+            -dname "CN=LiquidGlassLab CI, O=LiquidGlassLab, C=CN"
+          {
+            echo "SIGNING_STORE_FILE=$RUNNER_TEMP/liquid-glass-lab-release.jks"
+            echo "SIGNING_STORE_PASSWORD=$store_password"
+            echo "SIGNING_KEY_ALIAS=liquid-glass-lab"
+            echo "SIGNING_KEY_PASSWORD=$key_password"
+          } >> "$GITHUB_ENV"
+
+      - name: Build signed release APK
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Verify and stage APK
+        shell: bash
+        run: |
+          apk="app/build/outputs/apk/release/app-release.apk"
+          apksigner="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          "$apksigner" verify --verbose --print-certs "$apk"
+          mkdir -p dist
+          cp "$apk" "dist/LiquidGlassLab-release.apk"
+          sha256sum "dist/LiquidGlassLab-release.apk" > "dist/LiquidGlassLab-release.apk.sha256"
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: LiquidGlassLab-release-${{ github.run_number }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "build-${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}" \
+            "dist/LiquidGlassLab-release.apk" \
+            "dist/LiquidGlassLab-release.apk.sha256" \
+            --target "$GITHUB_SHA" \
+            --title "LiquidGlassLab Build #${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}" \
+            --notes "Automatically built from commit $GITHUB_SHA. This APK uses an ephemeral CI signature and cannot update APKs from other runs."
