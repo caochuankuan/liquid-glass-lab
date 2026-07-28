@@ -14,7 +14,19 @@
 | AndroidLiquidGlassView | AGSL RuntimeShader + 实时 Bitmap 采样 | View 体系的动态液态折射，API 33+ |
 | Prismal | OpenGL ES | 折射、Fresnel 与高光 |
 
-![FlowTab + Backdrop](docs/images/flowtab-backdrop.png)
+## 运行截图
+
+| Haze（磨砂对照组） | FlowTab + Backdrop |
+| --- | --- |
+| <img src="docs/images/haze.png" width="360" alt="Haze Demo"> | <img src="docs/images/flowtab-backdrop.png" width="360" alt="FlowTab + Backdrop Demo"> |
+
+| Kyant Backdrop | AndroidLiquidGlassView |
+| --- | --- |
+| <img src="docs/images/kyant-backdrop.png" width="360" alt="Kyant Backdrop Demo"> | <img src="docs/images/android-liquid-glass-view.png" width="360" alt="AndroidLiquidGlassView Demo"> |
+
+| Prismal |
+| --- |
+| <img src="docs/images/prismal.png" width="360" alt="Prismal Demo"> |
 
 ## AndroidLiquidGlassView 实时采样说明
 
